@@ -30,13 +30,16 @@ def find_split(training_dataset):
             if sorted_column[i] == sorted_column[i+1]:
                 continue
             split_point = (sorted_column[i] + sorted_column[i+1]) / 2
-            S_left = S_right = []
+            S_left, S_right = [], []
             for j in range(len(input)):
-                (S_left if input[j][attr] <= split_point else S_right).append(np.concatenate((input[j], label[j])))
+                if input[j][attr] <= split_point:
+                    S_left.append(np.concatenate((input[j], label[j])))
+                else:
+                    S_right.append(np.concatenate((input[j], label[j])))
             S_left = np.array(S_left)
             S_right = np.array(S_right)
             if attribute == None or (val != None and information_gain(training_dataset, S_left, S_right) > val):
-                attribute, val = i, split_point
+                attribute, val = attr, split_point
                 l_dataset, r_dataset = S_left, S_right
 
     return (attribute, val, l_dataset, r_dataset)
@@ -48,7 +51,7 @@ def information_gain(S_all, S_left, S_right):
         entropy = 0
         for i in range(1,5):
             p = len(list(filter(lambda x: x == i, label))) / len(label)
-            entropy += -p * math.log(p, 2)
+            entropy += -p * math.log(p, 2) if p != 0 else 0
         return entropy
 
     label = np.hsplit(S_all, [-1])[1]
@@ -69,8 +72,8 @@ def evaluate_decision_tree(test_dataset, trained_tree):
     for i in test_dataset:
         node = trained_tree[0]
         while 'room' not in node.keys():
-            node = node['left'][0] if i[node['attr']] <= node['value'] else node['right'][0]
-        confusion_matrix[test_dataset[-1]][node['room']] += 1
+            node = node['left'] if i[node['attr']] <= node['value'] else node['right']
+        confusion_matrix[int(i[-1]) - 1][int(node['room']) - 1] += 1
     
     return confusion_matrix
 
@@ -80,8 +83,8 @@ def cross_validation_evaluation(dataset, depth):
     cross_val_confusmat = []
     for i in range(10):
         print("cross validation fold " + str(i))
-        front, back = dataset[:i*proportion] if i != 0 else [], dataset[(i+1)*proportion:] if i != 9 else []
-        training_set = back if front == [] else (front if back == [] else front + back)
+        front, back = dataset[:i*proportion], dataset[(i+1)*proportion:]
+        training_set = np.concatenate((front, back))
         test_set = dataset[i*proportion:(i+1)*proportion]
         trained_tree = decision_tree_learning(training_set, depth)
         cross_val_confusmat += evaluate_decision_tree(test_set, trained_tree)
@@ -94,4 +97,5 @@ def decision_tree_pruning():
 
 # main function, including cross-validation and metric calculation
 data = np.loadtxt("./wifi_db/clean_dataset.txt")
-cross_validation_evaluation(data, 0)
+matrix = cross_validation_evaluation(data, 0)
+print(matrix)
