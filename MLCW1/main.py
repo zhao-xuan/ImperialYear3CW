@@ -97,5 +97,6 @@ def decision_tree_pruning():
 
 # main function, including cross-validation and metric calculation
 data = np.loadtxt("./wifi_db/clean_dataset.txt")
+np.random.shuffle(data)
 matrix = cross_validation_evaluation(data, 0)
 print(matrix)
