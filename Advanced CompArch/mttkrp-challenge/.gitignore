@@ -1,0 +1,9 @@
+cmake-build-*/**
+.idea/*
+
+CMakeFiles/*
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+.DS_Store
+mttkrp
